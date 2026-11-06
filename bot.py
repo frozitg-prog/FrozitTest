@@ -6,10 +6,13 @@ from datetime import datetime, date, timedelta
 from zoneinfo import ZoneInfo
 
 import aiosqlite
+from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.deep_linking import create_start_link, decode_payload
+
+load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN", "")
 DB_PATH = os.getenv("DB_PATH", "streaks.db")
@@ -391,10 +394,16 @@ async def scheduler(bot: Bot):
                 if now.hour in REMINDER_HOURS and checked_count < 2:
                     for uid in (pair["user1"], pair["user2"]):
                         cur = await db.execute(
+                            "SELECT 1 FROM checkins WHERE pair_id=? AND user_id=? AND day=?",
+                            (pair["id"], uid, day)
+                        )
+                        already_checked = await cur.fetchone()
+                        cur = await db.execute(
                             "SELECT 1 FROM reminders WHERE pair_id=? AND user_id=? AND day=? AND hour=?",
                             (pair["id"], uid, day, now.hour)
                         )
-                        if await cur.fetchone() is None:
+                        already_reminded = await cur.fetchone()
+                        if not already_checked and not already_reminded:
                             await db.execute("INSERT OR IGNORE INTO reminders VALUES(?,?,?,?)",
                                              (pair["id"], uid, day, now.hour))
                             try:
