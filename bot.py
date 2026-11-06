@@ -75,6 +75,10 @@ async def init_db():
             pair_id INTEGER NOT NULL, user_id INTEGER NOT NULL, day TEXT NOT NULL, hour INTEGER NOT NULL,
             PRIMARY KEY(pair_id, user_id, day, hour)
         );
+        CREATE TABLE IF NOT EXISTS daily_finalized(
+            pair_id INTEGER NOT NULL, day TEXT NOT NULL,
+            PRIMARY KEY(pair_id, day)
+        );
         """)
         await db.commit()
 
@@ -268,6 +272,7 @@ async def checkin(call: CallbackQuery):
         )
         cur = await db.execute("SELECT COUNT(DISTINCT user_id) FROM checkins WHERE pair_id=? AND day=?", (pair_id, day))
         count = (await cur.fetchone())[0]
+        old_streak = pair["streak"]
         if count == 2 and pair["last_mutual_day"] != day:
             yesterday = (today() - timedelta(days=1)).isoformat()
             new_streak = pair["streak"] + 1 if pair["last_mutual_day"] == yesterday else 1
@@ -287,6 +292,16 @@ async def checkin(call: CallbackQuery):
             await call.bot.send_message(other, f"✅ Ваш друг тоже подтвердил активность за сегодня! Серия: {pair['streak']} дн.")
         except Exception:
             pass
+        milestones = {10, 30, 50, 100, 200, 300, 400, 500}
+        if old_streak < pair["streak"] and pair["streak"] in milestones:
+            reward = "🏆 <b>Новое достижение!</b>\n\n"
+            reward += f"Вы поддерживаете огонёк уже {pair['streak']} дней! "
+            reward += "Новый уровень огонька разблокирован 🔥"
+            for uid in (pair["user1"], pair["user2"]):
+                try:
+                    await call.bot.send_message(uid, reward, parse_mode="HTML")
+                except Exception:
+                    pass
     else:
         await call.message.answer("⏳ Твоя отметка сохранена. Ждём подтверждение второго участника.")
     await call.message.answer("🔥 Меню огонька", reply_markup=pair_keyboard(pair_id, True))
@@ -373,7 +388,7 @@ async def scheduler(bot: Bot):
                 cur = await db.execute("SELECT COUNT(DISTINCT user_id) FROM checkins WHERE pair_id=? AND day=?",
                                        (pair["id"], day))
                 checked_count = (await cur.fetchone())[0]
-                if now.hour in REMINDER_HOURS and now.minute == 0 and checked_count < 2:
+                if now.hour in REMINDER_HOURS and checked_count < 2:
                     for uid in (pair["user1"], pair["user2"]):
                         cur = await db.execute(
                             "SELECT 1 FROM reminders WHERE pair_id=? AND user_id=? AND day=? AND hour=?",
@@ -388,17 +403,30 @@ async def scheduler(bot: Bot):
                                 pass
             await db.commit()
 
-        # После полуночи проверяем предыдущий день и сбрасываем пропущенные серии.
-        if now.hour == 0 and now.minute == 5:
+        # После полуночи один раз закрываем предыдущий календарный день.
+        if now.hour == 0 and now.minute >= 5:
             yesterday = (now.date() - timedelta(days=1)).isoformat()
             async with aiosqlite.connect(DB_PATH) as db:
                 db.row_factory = aiosqlite.Row
-                cur = await db.execute("SELECT * FROM pairs WHERE status='active' AND streak>0 AND (last_mutual_day IS NULL OR last_mutual_day<?)",
-                                       (yesterday,))
-                missed = await cur.fetchall()
-                for pair in missed:
-                    await db.execute("UPDATE pairs SET streak=0 WHERE id=?", (pair["id"],))
-                    await notify(bot, pair, "💔 Огонёк погас: за вчерашний день не было двух подтверждений. Можно начать новую серию сегодня.")
+                cur = await db.execute("SELECT * FROM pairs WHERE status='active'")
+                all_pairs = await cur.fetchall()
+                for pair in all_pairs:
+                    cur = await db.execute(
+                        "SELECT 1 FROM daily_finalized WHERE pair_id=? AND day=?",
+                        (pair["id"], yesterday)
+                    )
+                    if await cur.fetchone():
+                        continue
+                    cur = await db.execute(
+                        "SELECT COUNT(DISTINCT user_id) FROM checkins WHERE pair_id=? AND day=?",
+                        (pair["id"], yesterday)
+                    )
+                    completed = (await cur.fetchone())[0] == 2
+                    if not completed and pair["streak"] > 0:
+                        await db.execute("UPDATE pairs SET streak=0 WHERE id=?", (pair["id"],))
+                        await notify(bot, pair, "💔 Огонёк погас: за вчерашний день не было двух подтверждений. Можно начать новую серию сегодня.")
+                    await db.execute("INSERT OR IGNORE INTO daily_finalized(pair_id,day) VALUES(?,?)",
+                                     (pair["id"], yesterday))
                 await db.commit()
         await asyncio.sleep(60)
 
