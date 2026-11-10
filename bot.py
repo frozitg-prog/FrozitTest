@@ -51,15 +51,17 @@ async def check_subscription(callback: types.CallbackQuery):
         )
     else:
         await callback.message.edit_text(
-            "Ты не подписан не еби мозги soso",
+            "Ты ещё не подписан не ебень мозги!!!",
             reply_markup=keyboard
         )
 
-    await callback.answer() 
-    
-    async def main():
+    await callback.answer()
+
+
+async def main():
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+
