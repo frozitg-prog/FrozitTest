@@ -40,28 +40,27 @@ async def start(message: types.Message):
 async def check_subscription(callback: types.CallbackQuery):
     user_id = callback.from_user.id
 
-    member = await bot.get_chat_member(
-        chat_id=CHANNEL_ID,
-        user_id=user_id
-    )
+    try:
+        member = await bot.get_chat_member(
+            chat_id=CHANNEL_ID,
+            user_id=user_id
+        )
+    except Exception as error:
+        print("Ошибка проверки подписки:", error)
+        await callback.answer(
+            "Не удалось проверить подписку!",
+            show_alert=True
+        )
+        return
 
     if member.status in ["member", "administrator", "creator"]:
         await callback.message.edit_text(
-            "Спасибо за подписку!"
+            "Спасибо за подписку! 🎉"
         )
     else:
         await callback.message.edit_text(
-            "Ты ещё не подписан не ебень мозги!!!",
+            "Ты ещё не подписан на канал!",
             reply_markup=keyboard
         )
 
     await callback.answer()
-
-
-async def main():
-    await dp.start_polling(bot)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
