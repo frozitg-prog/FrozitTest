@@ -26,6 +26,13 @@ keyboard = InlineKeyboardMarkup(
     ]
 )
 
+@dp.message(Command("start"))
+async def start(message: types.Message):
+    await message.answer(
+        "Привет! Подпишись на наш канал 👇",
+        reply_markup=keyboard
+    )
+
 async def main():
     await dp.start_polling(bot)
 
