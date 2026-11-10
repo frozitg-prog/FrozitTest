@@ -31,7 +31,7 @@ keyboard = InlineKeyboardMarkup(
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer(
-        "Привет! Подпишись на наш канал 👇",
+        "Привет! чтобы продолжить",
         reply_markup=keyboard
     )
 
@@ -40,18 +40,10 @@ async def start(message: types.Message):
 async def check_subscription(callback: types.CallbackQuery):
     user_id = callback.from_user.id
 
-    try:
-        member = await bot.get_chat_member(
-            chat_id=CHANNEL_ID,
-            user_id=user_id
-        )
-    except Exception as error:
-        print("Ошибка проверки подписки:", error)
-        await callback.answer(
-            "Не удалось проверить подписку. Попробуй позже.",
-            show_alert=True
-        )
-        return
+    member = await bot.get_chat_member(
+        chat_id=CHANNEL_ID,
+        user_id=user_id
+    )
 
     if member.status in ["member", "administrator", "creator"]:
         await callback.message.edit_text(
@@ -59,14 +51,13 @@ async def check_subscription(callback: types.CallbackQuery):
         )
     else:
         await callback.message.edit_text(
-            "Не наебывай, подпишись!",
+            "Ты не подписан не еби мозги",
             reply_markup=keyboard
         )
 
-    await callback.answer()
-
-
-async def main():
+    await callback.answer() 
+    
+    async def main():
     await dp.start_polling(bot)
 
 
