@@ -47,11 +47,11 @@ async def check_subscription(callback: types.CallbackQuery):
 
     if member.status in ["member", "administrator", "creator"]:
         await callback.message.edit_text(
-            "Спасибо за подписку! 🎉"
+            "Спасибо за подписку!"
         )
     else:
         await callback.message.edit_text(
-            "Ты не подписан не еби мозги",
+            "Ты не подписан не еби мозги soso",
             reply_markup=keyboard
         )
 
