@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dotenv import load_dotenv
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
@@ -14,7 +15,6 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 CUSTOM_EMOJI_ID = "5368324170671202286"
 
 if not BOT_TOKEN:
-    raise RuntimeError("Не задан BOT_TOKEN. Добавь токен в файл .env")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,12 +30,12 @@ async def start_handler(message: Message) -> None:
     user = message.from_user
     name = html.escape(user.first_name if user else "друг")
 
-    text = (
-        f"Привет, {name}, рады тебя видеть! "
-        f'<tg-emoji emoji-id="{CUSTOM_EMOJI_ID}">👍</tg-emoji>'
-    )
-    await message.answer(text, parse_mode="HTML")
-
+keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Привет, подпишитесь на наш тг-канал",
+                url="https://t.me/Frizak67"
 
 async def main() -> None:
     bot = Bot(token=BOT_TOKEN)
