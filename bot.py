@@ -1,50 +1,33 @@
 import asyncio
-import html
-import logging
-import os
 
-from aiogram import Bot, Dispatcher
-from aiogram.filters import CommandStart
-from aiogram.types import Message
-from dotenv import load_dotenv
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-load_dotenv()
+BOT_TOKEN = 9178506943:AAHcuXtM6nBgeB29sQGH1VX1OR35QuUUpL8
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-CUSTOM_EMOJI_ID = "5368324170671202286"
-
-if not BOT_TOKEN:
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-)
-logger = logging.getLogger(__name__)
-
+bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
-
-
-@dp.message(CommandStart())
-async def start_handler(message: Message) -> None:
-    user = message.from_user
-    name = html.escape(user.first_name if user else "друг")
 
 keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="Привет, подпишитесь на наш тг-канал",
+                text="Подпишись на наш канал ❤",
                 url="https://t.me/Frizak67"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Проверить сабку",
+                callback_data="check_sub"
+            )
+        ]   
+    ]
+) 
 
-async def main() -> None:
-    bot = Bot(token=BOT_TOKEN)
-    try:
-        me = await bot.get_me()
-        logger.info("Бот запущен: @%s", me.username)
-        await dp.start_polling(bot)
-    finally:
-        await bot.session.close()
+async def main():
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
