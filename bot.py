@@ -1,8 +1,9 @@
 import asyncio
+import html
 import logging
 import os
 
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dotenv import load_dotenv
@@ -10,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-STICKER_FILE_ID = os.getenv("STICKER_FILE_ID", "").strip()
+CUSTOM_EMOJI_ID = "5368324170671202286"
 
 if not BOT_TOKEN:
     raise RuntimeError("Не задан BOT_TOKEN. Добавь токен в файл .env")
@@ -25,43 +26,15 @@ dp = Dispatcher()
 
 
 @dp.message(CommandStart())
-async def start_handler(message: Message, bot: Bot) -> None:
+async def start_handler(message: Message) -> None:
     user = message.from_user
-    name = user.first_name if user else "друг"
+    name = html.escape(user.first_name if user else "друг")
 
-    # Сначала отправляем приветствие.
-    await message.answer(
-        f"Привет, {name}, рады тебя видеть! ♡"
+    text = (
+        f"Привет, {name}, рады тебя видеть! "
+        f'<tg-emoji emoji-id="{CUSTOM_EMOJI_ID}">👍</tg-emoji>'
     )
-
-    # Настоящий анимированный стикер отправляется по Telegram file_id.
-    # Укажи его в STICKER_FILE_ID в .env.
-    if STICKER_FILE_ID:
-        try:
-            await bot.send_sticker(
-                chat_id=message.chat.id,
-                sticker=STICKER_FILE_ID,
-            )
-        except Exception:
-            logger.exception("Не удалось отправить стикер")
-            await message.answer("💗")
-    else:
-        await message.answer(
-            "💗\nДобавь file_id анимированного сердечка в STICKER_FILE_ID, "
-            "чтобы бот отправлял стикер."
-        )
-
-
-@dp.message(F.sticker)
-async def sticker_id_handler(message: Message) -> None:
-    """Показывает file_id присланного стикера для настройки .env."""
-    sticker = message.sticker
-    await message.answer(
-        "Вот file_id этого стикера. Скопируй его в .env в переменную "
-        "STICKER_FILE_ID:\n\n"
-        f"<code>{sticker.file_id}</code>",
-        parse_mode="HTML",
-    )
+    await message.answer(text, parse_mode="HTML")
 
 
 async def main() -> None:
