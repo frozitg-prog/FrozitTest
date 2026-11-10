@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 BOT_TOKEN = "9178506943:AAHcuXtM6nBgeB29sQGH1VX1OR35QuUUpL8"
-CHANNEL_ID = -1004379579253
+CHANNEL_ID = -1003912887034
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
