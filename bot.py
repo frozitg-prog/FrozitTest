@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-BOT_TOKEN = 9178506943:AAHcuXtM6nBgeB29sQGH1VX1OR35QuUUpL8
+BOT_TOKEN = "9178506943:AAHcuXtM6nBgeB29sQGH1VX1OR35QuUUpL8"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -22,9 +22,9 @@ keyboard = InlineKeyboardMarkup(
                 text="Проверить сабку",
                 callback_data="check_sub"
             )
-        ]   
+        ]
     ]
-) 
+)
 
 async def main():
     await dp.start_polling(bot)
